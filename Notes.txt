@@ -1,0 +1,15 @@
+$body = @{ userId = "user123" } | ConvertTo-Json
+$response = Invoke-RestMethod -Uri "http://localhost:5225/dev/token" -Method Post -ContentType "application/json" -Body $body
+$token = $response.token
+
+for ($i = 1; $i -le 12; $i++) {
+    $code = curl.exe -s -o NUL -w "%{http_code}" http://localhost:5225/api/products -H "Authorization: Bearer $token"
+    Write-Host "Request $i -> $code"
+}
+
+redis : 6379,
+backend : 5285
+ApiGateway : 5225
+
+//postgree start to write:
+psql -U postgres
