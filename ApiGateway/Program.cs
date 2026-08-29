@@ -34,6 +34,8 @@ builder.Services.AddDbContext<GatewayDbContext>(options =>
 
 builder.Services.AddScoped<IRateLimitConfigRepository, RateLimitConfigRepository>();
 
+builder.Services.AddSingleton<IRequestStatsService, RequestStatsService>();
+
 // NEW: CORS, needed for Phase 8's React dashboard running on a different port
 builder.Services.AddCors(options =>
 {

@@ -13,3 +13,9 @@ ApiGateway : 5225
 
 //postgree start to write:
 psql -U postgres
+
+//endpoints in this project
+Method	Path	Purpose
+GET	/api/products	List all products
+GET	/api/products/{id}	Get one product
+POST	/api/products	Create a product

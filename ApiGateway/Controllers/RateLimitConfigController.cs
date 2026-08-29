@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using ApiGateway.DTOs;
 using ApiGateway.Models;
 using ApiGateway.Repositories;
@@ -26,16 +28,23 @@ public class RateLimitConfigController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<RateLimitConfigDto>> Create(CreateRateLimitConfigDto dto)
     {
-        var config = new RateLimitConfiguration
+        try
         {
-            Endpoint = dto.Endpoint,
-            Capacity = dto.Capacity,
-            RefillRatePerSecond = dto.RefillRatePerSecond,
-            IsActive = dto.IsActive
-        };
+            var config = new RateLimitConfiguration
+            {
+                Endpoint = dto.Endpoint,
+                Capacity = dto.Capacity,
+                RefillRatePerSecond = dto.RefillRatePerSecond,
+                IsActive = dto.IsActive
+            };
 
-        var created = await _repository.CreateAsync(config);
-        return Ok(ToDto(created));
+            var created = await _repository.CreateAsync(config);
+            return Ok(ToDto(created));
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" })
+        {
+            return Conflict(new { error = $"A configuration for endpoint '{dto.Endpoint}' already exists." });
+        }
     }
 
     [HttpPut("{id:int}")]

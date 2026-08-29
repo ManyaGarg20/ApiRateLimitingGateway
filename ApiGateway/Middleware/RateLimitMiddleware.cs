@@ -1,4 +1,5 @@
 using ApiGateway.Repositories;
+using ApiGateway.Services;
 using ApiGateway.Strategies;
 
 namespace ApiGateway.Middleware;
@@ -21,10 +22,12 @@ public class RateLimitMiddleware
     public async Task InvokeAsync(
         HttpContext context,
         IRateLimitStrategy rateLimitStrategy,
-        IRateLimitConfigRepository configRepository)
+        IRateLimitConfigRepository configRepository,
+        IRequestStatsService statsService)
     {
         if (context.Request.Path.StartsWithSegments("/dev/token") ||
-            context.Request.Path.StartsWithSegments("/api/config"))
+            context.Request.Path.StartsWithSegments("/api/config") ||
+            context.Request.Path.StartsWithSegments("/api/stats"))
         {
             await _next(context);
             return;
@@ -49,6 +52,7 @@ public class RateLimitMiddleware
 
         if (!result.IsAllowed)
         {
+            statsService.RecordRejected();
             _logger.LogWarning("Rate limit exceeded for {Key}", key);
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
             context.Response.Headers.RetryAfter = Math.Ceiling(result.RetryAfterSeconds).ToString();
@@ -60,6 +64,6 @@ public class RateLimitMiddleware
             return;
         }
 
-        await _next(context);
+        statsService.RecordAllowed();
     }
 }
