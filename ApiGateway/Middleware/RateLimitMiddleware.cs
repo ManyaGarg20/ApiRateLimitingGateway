@@ -65,5 +65,6 @@ public class RateLimitMiddleware
         }
 
         statsService.RecordAllowed();
+        await _next(context);
     }
 }
